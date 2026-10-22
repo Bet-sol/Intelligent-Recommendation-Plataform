@@ -1,0 +1,95 @@
+# Intelligent Recommendation Platform - local deployment (Milestone 3).
+#
+#   docker compose up --build                 # API only, in-process backends (default)
+#   docker compose --profile full up --build  # API + worker + Redis + RabbitMQ + MongoDB
+#
+# Host ports default to 8000 (api) and 8001 (api-full). If one is taken,
+# override it: API_PORT=8080 docker compose up   (PowerShell: $env:API_PORT=8080)
+#
+# Default profile: one container, exactly the configuration that is tested.
+# The "full" profile wires the production backends of the architecture
+# (Table 7). Their adapters exist in the code but had not been exercised
+# against real servers before this milestone: treat that profile as the
+# target deployment, and see docs/MILESTONE3_IMPLEMENTATION.md for its status.
+
+services:
+  api:
+    build: .
+    image: recommendation-platform:latest
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      WORKERS: "2"
+      RECO_LOG_LEVEL: INFO
+    volumes:
+      - api-data:/app/data
+    restart: unless-stopped
+
+  # --- target architecture (profile "full") --------------------------------
+  api-full:
+    profiles: ["full"]
+    image: recommendation-platform:latest
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    ports:
+      - "${API_FULL_PORT:-8001}:8000"
+    environment:
+      WORKERS: "2"
+      RECO_REDIS_URL: redis://redis:6379/0
+      RECO_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      RECO_MONGO_URL: mongodb://mongo:27017
+    volumes:
+      - api-data:/app/data
+
+  worker:
+    profiles: ["full"]
+    image: recommendation-platform:latest
+    command: ["python", "-m", "messaging.feedback_history_service"]
+    # The image healthcheck probes the HTTP /health route, which this process
+    # does not serve; liveness of the worker is covered by the restart policy.
+    healthcheck:
+      disable: true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      RECO_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      RECO_MONGO_URL: mongodb://mongo:27017
+    volumes:
+      - api-data:/app/data
+    restart: unless-stopped
+
+  redis:
+    profiles: ["full"]
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    profiles: ["full"]
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  mongo:
+    profiles: ["full"]
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  api-data:
+  mongo-data:
