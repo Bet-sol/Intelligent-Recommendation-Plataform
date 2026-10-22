@@ -227,6 +227,10 @@ class RabbitMqInteractionEventQueue(InteractionEventQueue):
         self._connection = connection
         self._queue_name = queue_name
         self._retry_buffer = retry_buffer
+        # A pika BlockingConnection is not thread-safe, and FastAPI serves
+        # synchronous routes from a thread pool: every use of the channel is
+        # serialised through this lock.
+        self._lock = threading.Lock()
         self._channel = connection.channel()
         self._channel.queue_declare(queue=queue_name, durable=True)
 
@@ -245,12 +249,13 @@ class RabbitMqInteractionEventQueue(InteractionEventQueue):
         import pika
 
         try:
-            self._channel.basic_publish(
-                exchange="",
-                routing_key=self._queue_name,
-                body=event.to_json().encode("utf-8"),
-                properties=pika.BasicProperties(delivery_mode=2, message_id=event.event_id),
-            )
+            with self._lock:
+                self._channel.basic_publish(
+                    exchange="",
+                    routing_key=self._queue_name,
+                    body=event.to_json().encode("utf-8"),
+                    properties=pika.BasicProperties(delivery_mode=2, message_id=event.event_id),
+                )
         except Exception as exc:  # noqa: BLE001 - translated into the platform vocabulary
             if self._retry_buffer is not None:
                 self._retry_buffer.append(event)

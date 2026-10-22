@@ -134,8 +134,14 @@ class CachingDecorator(StrategyDecorator):
         return self._backend
 
     def cache_key(self, user_features: UserFeatures, k: int) -> str:
-        """Key composed of the user, the value of k, and the model version."""
-        return f"{KEY_PREFIX}:{user_features.user_id}:{k}:{self.model_version}"
+        """Key composed of the strategy, the user, the value of k, and the model version.
+
+        The strategy identifier is part of the key so that two strategies
+        sharing a Redis instance (for example, replicas configured with
+        different active strategies, or the active strategy and the fallback)
+        never read each other's rankings.
+        """
+        return f"{KEY_PREFIX}:{self.strategy_id}:{user_features.user_id}:{k}:{self.model_version}"
 
     def predict(self, user_features: UserFeatures, k: int = 10) -> list[ScoredItem]:
         key = self.cache_key(user_features, k)

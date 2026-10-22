@@ -133,9 +133,16 @@ def top_k(scores: np.ndarray, item_ids: Sequence[ItemId] | np.ndarray, k: int) -
     """
     if k <= 0 or scores.size == 0:
         return []
-    k = min(k, scores.size)
-    partition = np.argpartition(-scores, k - 1)[:k]
-    ordered = partition[np.argsort(-scores[partition])]
+    # Masked entries (already-seen items carry -inf) are never candidates:
+    # when fewer than k valid items remain, return fewer items instead of
+    # padding the ranking with items the user has already seen.
+    candidates = np.flatnonzero(np.isfinite(scores))
+    if candidates.size == 0:
+        return []
+    valid = scores[candidates]
+    k = min(k, candidates.size)
+    partition = np.argpartition(-valid, k - 1)[:k]
+    ordered = candidates[partition[np.argsort(-valid[partition])]]
     return [ScoredItem(item_id=int(item_ids[i]), score=float(scores[i])) for i in ordered]
 
 

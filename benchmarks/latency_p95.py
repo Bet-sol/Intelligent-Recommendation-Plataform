@@ -104,7 +104,7 @@ def build_controller(*, use_cache: bool, strategy_id: str | None) -> Recommendat
         feature_store=ParquetFeatureStoreManager.from_settings(settings),
         catalog_repository=SqlCatalogRepository.from_settings(settings),
         profile_repository=SqlUserProfileRepository.from_settings(settings),
-        fallback_strategy=fallback,
+        fallback_strategy=build_chain(fallback, chain, settings=settings),
         settings=settings,
     )
 
