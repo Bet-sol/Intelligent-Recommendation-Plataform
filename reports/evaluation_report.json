@@ -1,0 +1,484 @@
+{
+  "k": 10,
+  "positive_rating_threshold": 3.5,
+  "users_evaluated": 594,
+  "catalog_size": 9690,
+  "segment_cuts_train_ratings": {
+    "low_max": 36.0,
+    "medium_max": 102.0
+  },
+  "relevant_items_total": 12117,
+  "relevant_items_unseen_in_training": 1252,
+  "results": {
+    "popularity": {
+      "precision@10": 0.0202,
+      "recall@10": 0.0131,
+      "f1@10": 0.0122,
+      "ndcg@10": 0.0226,
+      "hit@10": 0.1465,
+      "users": 594,
+      "catalog_coverage": 0.0127,
+      "accuracy": 0.9969,
+      "fallback_users": 2,
+      "popularity_percentile": 0.0031,
+      "seconds": 0.14,
+      "by_segment": {
+        "low": {
+          "precision@10": 0.0076,
+          "recall@10": 0.0162,
+          "f1@10": 0.0102,
+          "ndcg@10": 0.015,
+          "hit@10": 0.0758,
+          "users": 198,
+          "catalog_coverage": 0.0074
+        },
+        "medium": {
+          "precision@10": 0.0128,
+          "recall@10": 0.013,
+          "f1@10": 0.012,
+          "ndcg@10": 0.0132,
+          "hit@10": 0.0923,
+          "users": 195,
+          "catalog_coverage": 0.0075
+        },
+        "high": {
+          "precision@10": 0.0398,
+          "recall@10": 0.0101,
+          "f1@10": 0.0142,
+          "ndcg@10": 0.0393,
+          "hit@10": 0.2687,
+          "users": 201,
+          "catalog_coverage": 0.0104
+        }
+      }
+    },
+    "als": {
+      "precision@10": 0.0865,
+      "recall@10": 0.0886,
+      "f1@10": 0.0673,
+      "ndcg@10": 0.1072,
+      "hit@10": 0.4832,
+      "users": 594,
+      "catalog_coverage": 0.0779,
+      "accuracy": 0.997,
+      "fallback_users": 2,
+      "popularity_percentile": 0.1564,
+      "seconds": 0.18,
+      "by_segment": {
+        "low": {
+          "precision@10": 0.0535,
+          "recall@10": 0.1411,
+          "f1@10": 0.0735,
+          "ndcg@10": 0.0999,
+          "hit@10": 0.3535,
+          "users": 198,
+          "catalog_coverage": 0.0445
+        },
+        "medium": {
+          "precision@10": 0.0831,
+          "recall@10": 0.0916,
+          "f1@10": 0.0802,
+          "ndcg@10": 0.095,
+          "hit@10": 0.5026,
+          "users": 195,
+          "catalog_coverage": 0.0399
+        },
+        "high": {
+          "precision@10": 0.1224,
+          "recall@10": 0.034,
+          "f1@10": 0.0486,
+          "ndcg@10": 0.1262,
+          "hit@10": 0.592,
+          "users": 201,
+          "catalog_coverage": 0.0667
+        }
+      }
+    },
+    "content": {
+      "precision@10": 0.012,
+      "recall@10": 0.0137,
+      "f1@10": 0.0101,
+      "ndcg@10": 0.0134,
+      "hit@10": 0.1128,
+      "users": 594,
+      "catalog_coverage": 0.1353,
+      "accuracy": 0.9969,
+      "fallback_users": 2,
+      "popularity_percentile": 0.4197,
+      "seconds": 0.16,
+      "by_segment": {
+        "low": {
+          "precision@10": 0.0096,
+          "recall@10": 0.0242,
+          "f1@10": 0.0134,
+          "ndcg@10": 0.0138,
+          "hit@10": 0.0808,
+          "users": 198,
+          "catalog_coverage": 0.0955
+        },
+        "medium": {
+          "precision@10": 0.0103,
+          "recall@10": 0.0136,
+          "f1@10": 0.0113,
+          "ndcg@10": 0.0116,
+          "hit@10": 0.1026,
+          "users": 195,
+          "catalog_coverage": 0.0749
+        },
+        "high": {
+          "precision@10": 0.0159,
+          "recall@10": 0.0036,
+          "f1@10": 0.0056,
+          "ndcg@10": 0.0148,
+          "hit@10": 0.1542,
+          "users": 201,
+          "catalog_coverage": 0.0398
+        }
+      }
+    },
+    "ncf": {
+      "precision@10": 0.0643,
+      "recall@10": 0.0425,
+      "f1@10": 0.0395,
+      "ndcg@10": 0.0799,
+      "hit@10": 0.3384,
+      "users": 594,
+      "catalog_coverage": 0.0098,
+      "accuracy": 0.997,
+      "fallback_users": 2,
+      "popularity_percentile": 0.0254,
+      "seconds": 1.62,
+      "by_segment": {
+        "low": {
+          "precision@10": 0.0273,
+          "recall@10": 0.0605,
+          "f1@10": 0.0366,
+          "ndcg@10": 0.0528,
+          "hit@10": 0.2071,
+          "users": 198,
+          "catalog_coverage": 0.0038
+        },
+        "medium": {
+          "precision@10": 0.0467,
+          "recall@10": 0.0404,
+          "f1@10": 0.0417,
+          "ndcg@10": 0.0571,
+          "hit@10": 0.3128,
+          "users": 195,
+          "catalog_coverage": 0.004
+        },
+        "high": {
+          "precision@10": 0.1179,
+          "recall@10": 0.0268,
+          "f1@10": 0.0403,
+          "ndcg@10": 0.1286,
+          "hit@10": 0.4925,
+          "users": 201,
+          "catalog_coverage": 0.0089
+        }
+      }
+    }
+  },
+  "failure_cases": {
+    "popularity": [
+      {
+        "user_id": 1,
+        "train_ratings": 186,
+        "top_train_genres": [
+          "Action",
+          "Adventure",
+          "Comedy"
+        ],
+        "recommended": [
+          "Yojimbo (1961)",
+          "Logan (2017)",
+          "Good, the Bad and the Ugly, The (Buono, il brutto, il cattivo, Il) (1966)",
+          "Dark Knight, The (2008)",
+          "Seven Samurai (Shichinin no samurai) (1954)"
+        ],
+        "held_out_liked": [
+          "Schindler's List (1993)",
+          "Pink Floyd: The Wall (1982)",
+          "Rob Roy (1995)",
+          "Texas Chainsaw Massacre, The (1974)",
+          "Ghostbusters (a.k.a. Ghost Busters) (1984)"
+        ]
+      },
+      {
+        "user_id": 2,
+        "train_ratings": 24,
+        "top_train_genres": [
+          "Drama",
+          "Action",
+          "Crime"
+        ],
+        "recommended": [
+          "Secrets & Lies (1996)",
+          "Lawrence of Arabia (1962)",
+          "Double Indemnity (1944)",
+          "Paths of Glory (1957)",
+          "Celebration, The (Festen) (1998)"
+        ],
+        "held_out_liked": [
+          "Good Will Hunting (1997)",
+          "Town, The (2010)",
+          "Mad Max: Fury Road (2015)",
+          "Warrior (2011)"
+        ]
+      },
+      {
+        "user_id": 4,
+        "train_ratings": 173,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Romance"
+        ],
+        "recommended": [
+          "Shawshank Redemption, The (1994)",
+          "Secrets & Lies (1996)",
+          "Lawrence of Arabia (1962)",
+          "Double Indemnity (1944)",
+          "Paths of Glory (1957)"
+        ],
+        "held_out_liked": [
+          "Bridget Jones's Diary (2001)",
+          "Innerspace (1987)",
+          "L.I.E. (2001)",
+          "Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)",
+          "Devil's Backbone, The (Espinazo del diablo, El) (2001)"
+        ]
+      }
+    ],
+    "als": [
+      {
+        "user_id": 2,
+        "train_ratings": 24,
+        "top_train_genres": [
+          "Drama",
+          "Action",
+          "Crime"
+        ],
+        "recommended": [
+          "Fight Club (1999)",
+          "American History X (1998)",
+          "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+          "Social Network, The (2010)",
+          "Gran Torino (2008)"
+        ],
+        "held_out_liked": [
+          "Good Will Hunting (1997)",
+          "Town, The (2010)",
+          "Mad Max: Fury Road (2015)",
+          "Warrior (2011)"
+        ]
+      },
+      {
+        "user_id": 5,
+        "train_ratings": 36,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Crime"
+        ],
+        "recommended": [
+          "Silence of the Lambs, The (1991)",
+          "Forrest Gump (1994)",
+          "Twelve Monkeys (a.k.a. 12 Monkeys) (1995)",
+          "Jurassic Park (1993)",
+          "Seven (a.k.a. Se7en) (1995)"
+        ],
+        "held_out_liked": [
+          "Once Were Warriors (1994)",
+          "Pinocchio (1940)",
+          "Heavenly Creatures (1994)",
+          "In the Line of Fire (1993)",
+          "In the Name of the Father (1993)"
+        ]
+      },
+      {
+        "user_id": 6,
+        "train_ratings": 252,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Romance"
+        ],
+        "recommended": [
+          "Toy Story (1995)",
+          "Mission: Impossible (1996)",
+          "Pocahontas (1995)",
+          "Home Alone (1990)",
+          "Quiz Show (1994)"
+        ],
+        "held_out_liked": [
+          "Independence Day (a.k.a. ID4) (1996)",
+          "Amazing Panda Adventure, The (1995)",
+          "Ghost and the Darkness, The (1996)",
+          "Sleepers (1996)",
+          "Aladdin and the King of Thieves (1996)"
+        ]
+      }
+    ],
+    "content": [
+      {
+        "user_id": 1,
+        "train_ratings": 186,
+        "top_train_genres": [
+          "Action",
+          "Adventure",
+          "Comedy"
+        ],
+        "recommended": [
+          "Twelve Tasks of Asterix, The (Les douze travaux d'Astérix) (1976)",
+          "Asterix and Cleopatra (Astérix et Cléopâtre) (1968)",
+          "The Great Train Robbery (1978)",
+          "Diamond Arm, The (Brilliantovaya ruka) (1968)",
+          "Aelita: The Queen of Mars (Aelita) (1924)"
+        ],
+        "held_out_liked": [
+          "Schindler's List (1993)",
+          "Pink Floyd: The Wall (1982)",
+          "Rob Roy (1995)",
+          "Texas Chainsaw Massacre, The (1974)",
+          "Ghostbusters (a.k.a. Ghost Busters) (1984)"
+        ]
+      },
+      {
+        "user_id": 2,
+        "train_ratings": 24,
+        "top_train_genres": [
+          "Drama",
+          "Action",
+          "Crime"
+        ],
+        "recommended": [
+          "Bullitt (1968)",
+          "Get Carter (1971)",
+          "Getaway, The (1972)",
+          "Shaft (1971)",
+          "Fight Club (1999)"
+        ],
+        "held_out_liked": [
+          "Good Will Hunting (1997)",
+          "Town, The (2010)",
+          "Mad Max: Fury Road (2015)",
+          "Warrior (2011)"
+        ]
+      },
+      {
+        "user_id": 4,
+        "train_ratings": 173,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Romance"
+        ],
+        "recommended": [
+          "Kind Hearts and Coronets (1949)",
+          "City Lights (1931)",
+          "How to Marry a Millionaire (1953)",
+          "Auntie Mame (1958)",
+          "Band of Outsiders (Bande à part) (1964)"
+        ],
+        "held_out_liked": [
+          "Bridget Jones's Diary (2001)",
+          "Innerspace (1987)",
+          "L.I.E. (2001)",
+          "Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)",
+          "Devil's Backbone, The (Espinazo del diablo, El) (2001)"
+        ]
+      }
+    ],
+    "ncf": [
+      {
+        "user_id": 2,
+        "train_ratings": 24,
+        "top_train_genres": [
+          "Drama",
+          "Action",
+          "Crime"
+        ],
+        "recommended": [
+          "Forrest Gump (1994)",
+          "Matrix, The (1999)",
+          "Pulp Fiction (1994)",
+          "Silence of the Lambs, The (1991)",
+          "Lord of the Rings: The Fellowship of the Ring, The (2001)"
+        ],
+        "held_out_liked": [
+          "Good Will Hunting (1997)",
+          "Town, The (2010)",
+          "Mad Max: Fury Road (2015)",
+          "Warrior (2011)"
+        ]
+      },
+      {
+        "user_id": 4,
+        "train_ratings": 173,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Romance"
+        ],
+        "recommended": [
+          "Forrest Gump (1994)",
+          "Shawshank Redemption, The (1994)",
+          "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+          "Toy Story (1995)",
+          "Back to the Future (1985)"
+        ],
+        "held_out_liked": [
+          "Bridget Jones's Diary (2001)",
+          "Innerspace (1987)",
+          "L.I.E. (2001)",
+          "Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)",
+          "Devil's Backbone, The (Espinazo del diablo, El) (2001)"
+        ]
+      },
+      {
+        "user_id": 5,
+        "train_ratings": 36,
+        "top_train_genres": [
+          "Drama",
+          "Comedy",
+          "Crime"
+        ],
+        "recommended": [
+          "Forrest Gump (1994)",
+          "Matrix, The (1999)",
+          "Silence of the Lambs, The (1991)",
+          "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+          "Star Wars: Episode IV - A New Hope (1977)"
+        ],
+        "held_out_liked": [
+          "Once Were Warriors (1994)",
+          "Pinocchio (1940)",
+          "Heavenly Creatures (1994)",
+          "In the Line of Fire (1993)",
+          "In the Name of the Father (1993)"
+        ]
+      }
+    ]
+  },
+  "build": {
+    "split": {
+      "stage": "split",
+      "method": "temporal per-user holdout",
+      "test_fraction": 0.2,
+      "min_ratings": 10,
+      "ratings_total": 100789,
+      "ratings_train": 80860,
+      "ratings_test": 19929,
+      "users_total": 610,
+      "users_evaluated": 610,
+      "latest_train_timestamp_median": 1163671466
+    },
+    "timings": {
+      "split_s": 0.18,
+      "transform_s": 2.66,
+      "materialize_s": 0.21,
+      "ncf_training_s": 7.7
+    }
+  }
+}
