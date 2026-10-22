@@ -99,6 +99,8 @@ def test_an_out_of_range_k_is_400(client: TestClient, k: int) -> None:
     response = client.get("/recommendations/1", params={"k": k})
     assert response.status_code == 400
     assert response.json()["code"] == "validation_error"
+    # the detail is Spanish, never Pydantic's English text
+    assert response.json()["detail"].startswith("La cantidad de recomendaciones (k) debe ser")
 
 
 def test_a_non_numeric_k_is_400(client: TestClient) -> None:
@@ -115,6 +117,12 @@ def test_the_error_payload_hides_internals(client: TestClient) -> None:
     body = client.get(f"/recommendations/{UNKNOWN_USER}").json()
     assert set(body) <= {"code", "message", "detail"}
     assert "Traceback" not in str(body)
+    # routes and methods the API does not serve also answer in Spanish
+    assert client.get("/no-such-route").json() == {
+        "code": "route_not_found",
+        "message": "La ruta solicitada no existe.",
+    }
+    assert client.delete("/recommendations/1").json()["code"] == "method_not_allowed"
 
 
 # --------------------------------------------------------------------------

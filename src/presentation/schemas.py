@@ -19,18 +19,20 @@ from pydantic import BaseModel, Field, field_validator
 MIN_K = 1
 MAX_K = 100
 
-UserIdField = Annotated[int, Field(ge=1, description="Identifier of the requesting user")]
-KField = Annotated[int, Field(ge=MIN_K, le=MAX_K, description="Number of items to return")]
+UserIdField = Annotated[int, Field(ge=1, description="Identificador del usuario que solicita")]
+KField = Annotated[int, Field(ge=MIN_K, le=MAX_K, description="Cantidad de elementos a devolver")]
 
 
 class RecommendedItem(BaseModel):
     """One entry of the Top-K ranking returned to the client."""
 
-    item_id: int = Field(description="Catalog identifier of the item")
-    rank: int = Field(ge=1, description="Position in the ranking, 1 being the best")
-    score: float = Field(description="Relevance score produced by the active strategy")
-    title: str | None = Field(default=None, description="Catalog title, when known")
-    categories: list[str] = Field(default_factory=list, description="Content categories")
+    item_id: int = Field(description="Identificador del elemento en el catálogo")
+    rank: int = Field(ge=1, description="Posición en el ranking; 1 es la mejor")
+    score: float = Field(description="Puntuación de relevancia de la estrategia activa")
+    title: str | None = Field(default=None, description="Título en el catálogo, si se conoce")
+    categories: list[str] = Field(
+        default_factory=list, description="Géneros o categorías del contenido"
+    )
 
 
 class RecommendationResponse(BaseModel):
@@ -45,14 +47,18 @@ class RecommendationResponse(BaseModel):
     user_id: int
     k: int
     items: list[RecommendedItem]
-    strategy_id: str = Field(description="Strategy that produced the ranking")
+    strategy_id: str = Field(description="Estrategia que generó el ranking")
     model_version: str
     feature_store_version: str
-    degraded: bool = Field(default=False, description="True when the fallback was used")
-    degradation_reason: str | None = Field(
-        default=None, description="Error code that triggered the fallback, when degraded"
+    degraded: bool = Field(
+        default=False, description="Verdadero si se usó la estrategia de respaldo"
     )
-    latency_ms: float = Field(default=0.0, description="Server-side latency of this request")
+    degradation_reason: str | None = Field(
+        default=None, description="Código del error que activó el respaldo, si hubo degradación"
+    )
+    latency_ms: float = Field(
+        default=0.0, description="Latencia de la solicitud medida en el servidor"
+    )
 
 
 class InteractionRequest(BaseModel):
@@ -63,7 +69,9 @@ class InteractionRequest(BaseModel):
     """
 
     user_id: UserIdField
-    event_type: str = Field(min_length=1, max_length=64, description="click, play, rating, ...")
+    event_type: str = Field(
+        min_length=1, max_length=64, description="Tipo de evento: click, play, rating, ..."
+    )
     item_id: int | None = Field(default=None, ge=1)
     recommended_items: list[int] = Field(default_factory=list, max_length=MAX_K)
     model_version: str | None = Field(default=None, max_length=64)
@@ -75,14 +83,14 @@ class InteractionRequest(BaseModel):
     def _strip_event_type(cls, value: str) -> str:
         cleaned = value.strip()
         if not cleaned:
-            raise ValueError("event_type cannot be blank")
+            raise ValueError("no puede estar vacío")
         return cleaned
 
     @field_validator("recommended_items")
     @classmethod
     def _validate_items(cls, value: list[int]) -> list[int]:
         if any(item < 1 for item in value):
-            raise ValueError("recommended_items must be positive identifiers")
+            raise ValueError("los identificadores deben ser positivos")
         return value
 
 
@@ -91,7 +99,9 @@ class InteractionAccepted(BaseModel):
 
     event_id: str
     accepted: bool = True
-    queued: bool = Field(description="False when the broker refused and the event was buffered")
+    queued: bool = Field(
+        description="Falso si el broker no aceptó el evento y quedó en el búfer de reintentos"
+    )
 
 
 class ErrorResponse(BaseModel):

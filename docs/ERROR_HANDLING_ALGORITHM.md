@@ -2,8 +2,10 @@
 
 The procedure followed by `GET /recommendations/{user_id}?k=K` for every
 failure. Each step names the file that implements it. Client-facing messages
-are in Spanish (`MENSAJES_ES` in `src/errors.py`); internal messages and logs
-stay in English.
+are in Spanish (`MENSAJES_ES` in `src/errors.py`), including the `detail` of a
+validation error (`detalle_de_validacion`), unknown routes or methods (404/405)
+and unexpected failures (500). Internal messages, the technical `detail` of the
+journal and the logs stay in English.
 
 ## Pseudocode
 

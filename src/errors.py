@@ -16,6 +16,7 @@ presentation layer and translated by the same handler.
 from __future__ import annotations
 
 from http import HTTPStatus
+from typing import Any
 
 #: Client-facing messages in Spanish, keyed by the stable error ``code``.
 #: ``message`` on the exception stays in English for developers and logs;
@@ -36,7 +37,67 @@ MENSAJES_ES: dict[str, str] = {
         "El evento no pudo publicarse; quedó guardado en el búfer de reintentos."
     ),
     "internal_error": "Ocurrió un error interno del servicio.",
+    "route_not_found": "La ruta solicitada no existe.",
+    "method_not_allowed": "El método HTTP no está permitido en esta ruta.",
+    "http_error": "La solicitud no pudo atenderse.",
 }
+
+#: Spanish names of the request fields, used to explain a validation error.
+CAMPOS_ES: dict[str, str] = {
+    "user_id": "El identificador de usuario",
+    "k": "La cantidad de recomendaciones (k)",
+    "event_type": "El tipo de evento",
+    "item_id": "El identificador del elemento",
+    "recommended_items": "La lista de elementos recomendados",
+    "model_version": "La versión del modelo",
+    "metadata": "Los metadatos",
+    "occurred_at": "La fecha del evento",
+}
+
+#: Spanish wording of the Pydantic error types a client can trigger. ``{...}``
+#: placeholders are filled from the error context (bounds, lengths).
+VALIDACIONES_ES: dict[str, str] = {
+    "missing": "es obligatorio",
+    "greater_than_equal": "debe ser mayor o igual que {ge}",
+    "greater_than": "debe ser mayor que {gt}",
+    "less_than_equal": "debe ser menor o igual que {le}",
+    "less_than": "debe ser menor que {lt}",
+    "int_parsing": "debe ser un número entero",
+    "int_type": "debe ser un número entero",
+    "int_from_float": "debe ser un número entero",
+    "float_parsing": "debe ser un número",
+    "string_type": "debe ser texto",
+    "string_too_short": "debe tener al menos {min_length} caracteres",
+    "string_too_long": "debe tener como máximo {max_length} caracteres",
+    "too_long": "admite como máximo {max_length} elementos",
+    "list_type": "debe ser una lista",
+    "dict_type": "debe ser un objeto",
+    "model_attributes_type": "debe ser un objeto JSON",
+    "datetime_parsing": "debe ser una fecha y hora válida",
+    "datetime_from_date_parsing": "debe ser una fecha y hora válida",
+    "json_invalid": "no es un JSON válido",
+    "value_error": "{error}",
+}
+
+
+def detalle_de_validacion(error: dict[str, Any]) -> str:
+    """Explain one Pydantic/FastAPI validation error in Spanish for the client.
+
+    The English text Pydantic produces is never returned: the error ``type``
+    selects a Spanish template and ``loc`` names the offending field.
+    """
+    loc = [str(part) for part in error.get("loc", ()) if part not in ("body", "query", "path")]
+    nombre = loc[-1] if loc else ""
+    if nombre.isdigit() and len(loc) > 1:  # an element of a list, e.g. recommended_items.0
+        nombre = loc[-2]
+    campo = CAMPOS_ES.get(nombre, f"El campo «{nombre}»" if nombre else "La solicitud")
+    plantilla = VALIDACIONES_ES.get(str(error.get("type", "")), "tiene un valor no válido")
+    contexto = {key: str(value) for key, value in (error.get("ctx") or {}).items()}
+    try:
+        texto = plantilla.format(**contexto)
+    except (KeyError, IndexError):
+        texto = "tiene un valor no válido"
+    return f"{campo}: {texto}." if plantilla == "{error}" else f"{campo} {texto}."
 
 
 class RecommendationPlatformError(Exception):
@@ -132,6 +193,9 @@ DEGRADATION_REASONS: dict[type[RecommendationPlatformError], str] = {
 
 __all__ = [
     "MENSAJES_ES",
+    "CAMPOS_ES",
+    "VALIDACIONES_ES",
+    "detalle_de_validacion",
     "DEGRADATION_REASONS",
     "ColdStartError",
     "EventPublishError",

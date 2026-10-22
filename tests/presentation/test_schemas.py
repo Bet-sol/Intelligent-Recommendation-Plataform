@@ -52,7 +52,7 @@ def test_a_negative_item_identifier_is_rejected() -> None:
 
 
 def test_negative_recommended_items_are_rejected() -> None:
-    with pytest.raises(ValidationError, match="positive identifiers"):
+    with pytest.raises(ValidationError, match="deben ser positivos"):
         InteractionRequest(user_id=1, event_type="click", recommended_items=[1, -2])
 
 

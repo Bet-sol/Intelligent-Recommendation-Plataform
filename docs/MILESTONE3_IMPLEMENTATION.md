@@ -28,9 +28,9 @@ Test suite: **300 tests, all passing** (264 from Milestone 2 + 36 new).
 
 | Feedback | Correction | Where |
 |---|---|---|
-| Error messages in English | Client-facing messages are translated to Spanish by stable error code (`MENSAJES_ES`). A code without a translation keeps its original message. Internal `message`/`detail` stay in English for developers and logs. | `src/errors.py`, handlers in `src/application/api.py` |
+| Error messages in English | Client-facing messages are translated to Spanish by stable error code (`MENSAJES_ES`); the `detail` of a validation error is built in Spanish (`detalle_de_validacion`), and unknown routes, methods and unexpected failures also answer in Spanish. Technical details stay in English in the journal and logs, never in the response. The web interface translates strategy names and genres. | `src/errors.py`, handlers in `src/application/api.py` |
 | No explicit error algorithm | Pseudocode, flowchart and decision table of the procedure the code already follows. | `docs/ERROR_HANDLING_ALGORITHM.md` |
-| No error journal (bitácora) | `ErrorJournal`: append-only JSON Lines with timestamp, kind, code, status, route, user and message. Records the errors answered by the validation and domain handlers (400, 404 and the 5xx of platform errors) and every degradation (cold start, model or feature store down, event publication failure); a route that does not exist (404/405) or an unexpected exception is not journaled. | `src/application/error_journal.py`; path `RECO_ERROR_LOG_PATH` in `src/config/settings.py` |
+| No error journal (bitácora) | `ErrorJournal`: append-only JSON Lines with timestamp, kind, code, status, route, user and message. Records every error answered by the handlers (validation 400, unknown user 404, unknown route or method 404/405, platform errors and unexpected exceptions 5xx) and every degradation (cold start, model or feature store down, event publication failure). | `src/application/error_journal.py`; path `RECO_ERROR_LOG_PATH` in `src/config/settings.py` |
 
 Design decisions: Spanish only (the error codes are stable, so a second
 language would be one dictionary entry per code); the journal is kept apart

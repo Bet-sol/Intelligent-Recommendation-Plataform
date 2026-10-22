@@ -27,6 +27,7 @@ from fastapi import Depends, FastAPI, Path, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ai.decorators import build_chain
 from ai.decorators.caching_decorator import CachingDecorator
@@ -39,7 +40,12 @@ from application.interaction_ingestion_service import InteractionIngestionServic
 from application.recommendation_controller import RecommendationController
 from config.settings import Settings, load_settings
 from data.feature_store_manager import ParquetFeatureStoreManager
-from errors import MENSAJES_ES, ModelUnavailableError, RecommendationPlatformError
+from errors import (
+    MENSAJES_ES,
+    ModelUnavailableError,
+    RecommendationPlatformError,
+    detalle_de_validacion,
+)
 from messaging.feedback_history_service import FeedbackHistoryService
 from messaging.interaction_event_queue import RetryBuffer, build_event_queue
 from persistence.nosql_interaction_history_repository import NoSqlInteractionHistoryRepository
@@ -223,9 +229,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             components.worker.stop()
 
     app = FastAPI(
-        title="Intelligent Recommendation Platform",
+        title="Plataforma de Recomendación Inteligente",
         version="0.3.0",
-        summary="Milestone 3 implementation of the layered architecture proposal",
+        summary="Implementación del Milestone 3 de la arquitectura en capas propuesta",
         lifespan=lifespan,
     )
     app.state.components = components
@@ -242,10 +248,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def _on_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         """Table 10, row 1: a schema violation is a 400, not the default 422."""
         first = exc.errors()[0] if exc.errors() else {}
-        field = ".".join(str(part) for part in first.get("loc", ()) if part != "body")
-        detail = f"{field}: {first.get('msg', 'invalid value')}" if field else None
+        detail = detalle_de_validacion(first) if first else None
         message = MENSAJES_ES["validation_error"]
-        _journal(request, "validation_error", message, 400, detail=detail)
+        # the journal keeps Pydantic's original text for developers
+        _journal(request, "validation_error", message, 400, detail=str(first.get("msg", "")))
         return JSONResponse(
             status_code=400,
             content=ErrorResponse(
@@ -256,11 +262,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(ValueError)
     async def _on_value_error(request: Request, exc: ValueError) -> JSONResponse:
         message = MENSAJES_ES["validation_error"]
+        # str(exc) is a developer message in English: journaled, not returned
         _journal(request, "validation_error", message, 400, detail=str(exc))
         return JSONResponse(
             status_code=400,
             content=ErrorResponse(
-                code="validation_error", message=message, detail=str(exc)
+                code="validation_error",
+                message=message,
+                detail="Revisa los parámetros de la solicitud.",
             ).model_dump(),
         )
 
@@ -272,17 +281,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         status = exc.status_code if exc.status_code != 200 else 503
         payload = exc.to_payload()
         _journal(request, exc.code, payload["message"], status, detail=exc.detail)
+        # the technical detail is English and stays in the journal; the client
+        # only gets the Spanish message
+        payload.pop("detail", None)
         return JSONResponse(status_code=status, content=payload)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _on_http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        """Unknown routes and methods answer in Spanish, like every other error."""
+        code = {404: "route_not_found", 405: "method_not_allowed"}.get(
+            exc.status_code, "http_error"
+        )
+        message = MENSAJES_ES[code]
+        _journal(request, code, message, exc.status_code, detail=str(exc.detail))
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=ErrorResponse(code=code, message=message).model_dump(exclude_none=True),
+            headers=getattr(exc, "headers", None),
+        )
+
+    @app.exception_handler(Exception)
+    async def _on_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+        """Last resort: an unexpected failure is a Spanish 500, never a traceback."""
+        message = MENSAJES_ES["internal_error"]
+        _journal(request, "internal_error", message, 500, detail=type(exc).__name__)
+        return JSONResponse(
+            status_code=500,
+            content=ErrorResponse(code="internal_error", message=message).model_dump(
+                exclude_none=True
+            ),
+        )
 
     @app.get(
         "/recommendations/{user_id}",
         response_model=RecommendationResponse,
         responses={400: {"model": ErrorResponse}, 404: {"model": ErrorResponse}},
-        summary="Top-K recommendations for a user (FR-04, FR-05)",
+        summary="Recomendaciones Top-K para un usuario (FR-04, FR-05)",
+        tags=["Recomendaciones"],
+        description=(
+            "Devuelve las k películas recomendadas para el usuario. Si el modelo o las "
+            "características no están disponibles, responde con el ranking de popularidad "
+            "y lo indica en degraded y degradation_reason."
+        ),
     )
     def get_recommendations(
-        user_id: int = Path(ge=1, description="Identifier of the requesting user"),
-        k: int = Query(default=10, ge=1, le=MAX_K, description="Size of the ranking"),
+        user_id: int = Path(ge=1, description="Identificador del usuario que solicita"),
+        k: int = Query(default=10, ge=1, le=MAX_K, description="Tamaño del ranking"),
         parts: ApplicationComponents = Depends(get_components),
     ) -> RecommendationResponse:
         """The endpoint of Section 9.6: ``GET /recommendations/{user_id}?k=10``."""
@@ -293,7 +337,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response_model=InteractionAccepted,
         status_code=202,
         responses={400: {"model": ErrorResponse}},
-        summary="Publish a user interaction event (FR-02)",
+        summary="Registrar una interacción del usuario (FR-02)",
+        tags=["Interacciones"],
+        description=(
+            "Encola el evento sin bloquear la navegación; responde 202 y el historial se "
+            "guarda fuera de la solicitud."
+        ),
     )
     def post_interaction(
         request: InteractionRequest,
@@ -302,7 +351,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """Queue an interaction without blocking navigation."""
         return parts.ingestion.ingest(request)
 
-    @app.get("/health", response_model=HealthResponse, summary="Operational snapshot")
+    @app.get(
+        "/health",
+        response_model=HealthResponse,
+        summary="Estado operativo del servicio",
+        tags=["Estado"],
+        description="Estrategia activa, backends en uso y tamaño del catálogo.",
+    )
     def health(parts: ApplicationComponents = Depends(get_components)) -> HealthResponse:
         return HealthResponse(
             status="degraded" if parts.startup_error else "ok",
