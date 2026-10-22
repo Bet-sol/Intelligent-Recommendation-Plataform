@@ -1,5 +1,7 @@
 # Intelligent Recommendation Platform
-## Software Engineering II — Milestone 2: Implementation of AI Software Components
+## Software Engineering II — Milestone 3: Testing, Validation, and Deployment of AI Systems
+
+> Milestone 3 additions are documented in [`docs/MILESTONE3_IMPLEMENTATION.md`](docs/MILESTONE3_IMPLEMENTATION.md).
 
 **Universidad Autónoma del Estado de México (UAEMex)**  
 *Faculty of Engineering — Degree in Artificial Intelligence Engineering*
@@ -54,7 +56,7 @@ pip install -e ".[dev,als,deep,content,cache,broker,nosql]"
 
 ### 2. Running Automated Tests
 
-Run the complete test suite (264 unit and integration tests):
+Run the complete test suite (300 unit, integration, failure-injection and system tests):
 
 ```bash
 python -m pytest
@@ -92,6 +94,24 @@ Once running, the following are available:
 
 ---
 
+## 🧪 Milestone 3 — validation, profiling and deployment
+
+```bash
+python benchmarks/evaluate_models.py          # temporal holdout + Precision/Recall/F1/NDCG per strategy
+python benchmarks/memory_profile.py           # tracemalloc + RSS per component
+python benchmarks/load_test.py --workers 4    # throughput and p95 under concurrent load
+docker compose up --build                     # API container at http://127.0.0.1:8000/ui/ (API_PORT=8080 if 8000 is taken)
+docker compose --profile full up --build      # + Redis, RabbitMQ, MongoDB and the FR-06 worker (API on port 8001)
+kubectl apply -k k8s/                         # Kubernetes manifests
+```
+
+Reports are written to `reports/`. Errors returned to clients are in Spanish and every error or
+degradation is recorded in the error journal `artifacts/logs/errors.jsonl` (see
+[`docs/ERROR_HANDLING_ALGORITHM.md`](docs/ERROR_HANDLING_ALGORITHM.md)). CI runs on every push:
+`.github/workflows/ci.yml`.
+
+---
+
 ## 📂 Repository Structure
 
 ```text
@@ -106,7 +126,11 @@ recommendation-platform/
 │   ├── messaging/          # Asynchronous event queue & FeedbackHistoryService worker
 │   └── config/             # Typed settings configuration
 ├── tests/                  # Mirrors src/ package by package + failure injection tests
-├── benchmarks/             # Latency p95 benchmark replay script
+├── benchmarks/             # Latency p95, model evaluation, memory profile, load test
+├── reports/                # Milestone 3 measurement reports (JSON / Markdown)
+├── docs/                   # Milestone 3 guide and error-handling algorithm
+├── k8s/                    # Kubernetes manifests (kubectl apply -k k8s/)
+├── Dockerfile              # API image; docker-compose.yml for local deployment
 ├── datasets/               # MovieLens ml-latest-small source data
 ├── artifacts/              # Parquet feature store, SQLite DB, model weights & reports
 ├── IMPLEMENTATION_NOTES.md # Component/file/status table, measured p95, deviations

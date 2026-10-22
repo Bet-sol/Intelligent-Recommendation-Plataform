@@ -162,7 +162,7 @@
 
 <header>
   <h1>Plataforma de Recomendación Inteligente</h1>
-  <span>Ingeniería de Software II — Milestone 2</span>
+  <span>Ingeniería de Software II — Milestone 3</span>
   <div id="estado">consultando servicio…</div>
 </header>
 
@@ -235,6 +235,15 @@ async function consultarEstado() {
   }
 }
 
+// Motivos de degradación (NFR-05) explicados en español. El servicio envía el
+// código estable (degradation_reason); la interfaz solo lo traduce.
+const MOTIVOS = {
+  cold_start: "este usuario aún no tiene historial suficiente para personalizar",
+  feature_store_unavailable: "no se pudieron leer las características del usuario",
+  model_unavailable: "el modelo de recomendación configurado no está disponible",
+  event_publish_failed: "el registro del evento quedó pendiente de reintento"
+};
+
 function pintarError(codigo, mensaje, detalle) {
   salida.innerHTML =
     "<h2>Resultados</h2><div class='fallo'>" + escapar(mensaje) +
@@ -246,10 +255,10 @@ function pintarRecomendaciones(datos) {
   let html = "<h2>Resultados</h2>";
 
   if (datos.degraded) {
+    const motivo = MOTIVOS[datos.degradation_reason] || datos.degradation_reason;
     html +=
-      "<div class='aviso'>Respuesta degradada (" + escapar(datos.degradation_reason) +
-      "). El modelo configurado no estuvo disponible y se respondió con el " +
-      "ranking de popularidad, sin interrumpir el servicio.</div>";
+      "<div class='aviso'>Se muestran las películas más populares porque " +
+      escapar(motivo) + ". El servicio siguió respondiendo sin interrupción.</div>";
   }
 
   html +=
