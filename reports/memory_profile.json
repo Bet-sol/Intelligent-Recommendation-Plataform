@@ -1,0 +1,56 @@
+{
+  "requests": 1000,
+  "k": 10,
+  "active_strategy": "als",
+  "allocated_by_component_mb": {
+    "feature_store": 1.69,
+    "catalog_repository": 0.16,
+    "profile_repository": 0.0,
+    "strategy:als": 1.79,
+    "strategy:content": 1.79,
+    "strategy:ncf": 54.97,
+    "strategy:popularity": 0.95
+  },
+  "python_heap_after_warmup_mb": 66.06,
+  "python_heap_after_requests_mb": 66.41,
+  "growth_during_requests_mb": 0.347,
+  "growth_per_1000_requests_kb": 355.07,
+  "python_heap_peak_mb": 67.61,
+  "process_rss_start_mb": 110.7,
+  "process_rss_end_mb": 420.4,
+  "largest_allocations_by_file": [
+    {
+      "location": "<frozen importlib._bootstrap_external>:0",
+      "mb": 27.89
+    },
+    {
+      "location": "C:\\Users\\gonza\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\torch\\_ops.py:0",
+      "mb": 3.41
+    },
+    {
+      "location": "<frozen importlib._bootstrap>:0",
+      "mb": 2.91
+    },
+    {
+      "location": "C:\\Users\\gonza\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\torch\\__init__.py:0",
+      "mb": 2.35
+    },
+    {
+      "location": "C:\\Users\\gonza\\Desktop\\Ingenieria de Software II\\Milestone 3\\Plataforma de Recomendacion\\src\\ai\\strategies\\content_based_strategy.py:0",
+      "mb": 1.8
+    },
+    {
+      "location": "C:\\Users\\gonza\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python313\\site-packages\\numpy\\_core\\shape_base.py:0",
+      "mb": 1.79
+    },
+    {
+      "location": "C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3824.0_x64__qbz5n2kfra8p0\\Lib\\linecache.py:0",
+      "mb": 1.64
+    },
+    {
+      "location": "C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.3824.0_x64__qbz5n2kfra8p0\\Lib\\dataclasses.py:0",
+      "mb": 1.37
+    }
+  ],
+  "users_in_feature_store": 609
+}

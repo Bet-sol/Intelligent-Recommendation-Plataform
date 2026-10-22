@@ -1,0 +1,109 @@
+{
+  "target_p95_ms": 200.0,
+  "server": "http://127.0.0.1:8081",
+  "label": "docker_full",
+  "workers": null,
+  "caching": true,
+  "levels": [
+    {
+      "concurrency": 1,
+      "duration_s": 10.0,
+      "requests": 1991,
+      "errors": 0,
+      "error_rate": 0.0,
+      "degraded_responses": 0,
+      "throughput_rps": 199.1,
+      "p50_ms": 4.44,
+      "p95_ms": 7.27,
+      "p99_ms": 9.64,
+      "max_ms": 44.17,
+      "verdict": "PASS",
+      "server_cpu_percent_mean": null,
+      "server_cpu_percent_max": null,
+      "server_rss_mb_max": null
+    },
+    {
+      "concurrency": 4,
+      "duration_s": 10.01,
+      "requests": 3402,
+      "errors": 0,
+      "error_rate": 0.0,
+      "degraded_responses": 0,
+      "throughput_rps": 339.8,
+      "p50_ms": 10.79,
+      "p95_ms": 15.42,
+      "p99_ms": 19.8,
+      "max_ms": 59.68,
+      "verdict": "PASS",
+      "server_cpu_percent_mean": null,
+      "server_cpu_percent_max": null,
+      "server_rss_mb_max": null
+    },
+    {
+      "concurrency": 16,
+      "duration_s": 10.04,
+      "requests": 2542,
+      "errors": 0,
+      "error_rate": 0.0,
+      "degraded_responses": 0,
+      "throughput_rps": 253.3,
+      "p50_ms": 55.8,
+      "p95_ms": 74.2,
+      "p99_ms": 83.44,
+      "max_ms": 137.99,
+      "verdict": "PASS",
+      "server_cpu_percent_mean": null,
+      "server_cpu_percent_max": null,
+      "server_rss_mb_max": null
+    },
+    {
+      "concurrency": 32,
+      "duration_s": 10.06,
+      "requests": 2345,
+      "errors": 0,
+      "error_rate": 0.0,
+      "degraded_responses": 0,
+      "throughput_rps": 233.1,
+      "p50_ms": 110.26,
+      "p95_ms": 149.79,
+      "p99_ms": 169.62,
+      "max_ms": 195.39,
+      "verdict": "PASS",
+      "server_cpu_percent_mean": null,
+      "server_cpu_percent_max": null,
+      "server_rss_mb_max": null
+    }
+  ],
+  "docker_stats": {
+    "plataformaderecomendacion-worker-1": {
+      "cpu_mean": 21.0,
+      "cpu_max": 34.71,
+      "mem_last": "47.2MiB",
+      "samples": 21
+    },
+    "plataformaderecomendacion-api-full-1": {
+      "cpu_mean": 166.4,
+      "cpu_max": 303.51,
+      "mem_last": "508.4MiB",
+      "samples": 21
+    },
+    "plataformaderecomendacion-redis-1": {
+      "cpu_mean": 3.6,
+      "cpu_max": 9.12,
+      "mem_last": "6.18MiB",
+      "samples": 21
+    },
+    "plataformaderecomendacion-rabbitmq-1": {
+      "cpu_mean": 52.4,
+      "cpu_max": 309.75,
+      "mem_last": "169.7MiB",
+      "samples": 21
+    },
+    "plataformaderecomendacion-mongo-1": {
+      "cpu_mean": 10.9,
+      "cpu_max": 18.11,
+      "mem_last": "94.16MiB",
+      "samples": 21
+    }
+  }
+}
