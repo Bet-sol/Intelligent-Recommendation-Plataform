@@ -224,8 +224,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Intelligent Recommendation Platform",
-        version="0.2.0",
-        summary="Milestone 2 implementation of the layered architecture proposal",
+        version="0.3.0",
+        summary="Milestone 3 implementation of the layered architecture proposal",
         lifespan=lifespan,
     )
     app.state.components = components

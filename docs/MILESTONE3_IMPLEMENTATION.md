@@ -30,7 +30,7 @@ Test suite: **300 tests, all passing** (264 from Milestone 2 + 36 new).
 |---|---|---|
 | Error messages in English | Client-facing messages are translated to Spanish by stable error code (`MENSAJES_ES`). A code without a translation keeps its original message. Internal `message`/`detail` stay in English for developers and logs. | `src/errors.py`, handlers in `src/application/api.py` |
 | No explicit error algorithm | Pseudocode, flowchart and decision table of the procedure the code already follows. | `docs/ERROR_HANDLING_ALGORITHM.md` |
-| No error journal (bitácora) | `ErrorJournal`: append-only JSON Lines with timestamp, kind, code, status, route, user and message. Records every 4xx/5xx and every degradation (cold start, model or feature store down, event publication failure). | `src/application/error_journal.py`; path `RECO_ERROR_LOG_PATH` in `src/config/settings.py` |
+| No error journal (bitácora) | `ErrorJournal`: append-only JSON Lines with timestamp, kind, code, status, route, user and message. Records the errors answered by the validation and domain handlers (400, 404 and the 5xx of platform errors) and every degradation (cold start, model or feature store down, event publication failure); a route that does not exist (404/405) or an unexpected exception is not journaled. | `src/application/error_journal.py`; path `RECO_ERROR_LOG_PATH` in `src/config/settings.py` |
 
 Design decisions: Spanish only (the error codes are stable, so a second
 language would be one dictionary entry per code); the journal is kept apart
@@ -174,27 +174,33 @@ the fallback is now measured, not assumed.
 
 ## 4. CI/CD
 
-`.github/workflows/ci.yml` runs on every push and pull request:
+`.github/workflows/ci.yml` runs on every push to `main`, on every pull request
+and on demand. `tests` runs only after `quality`; `benchmark` and `docker` run
+in parallel after `tests`:
 
 | Stage | Commands | Fails the build when |
 |---|---|---|
 | quality | `ruff check .`, `black --check .`, `mypy` | style, format or type error |
 | tests | `pytest --cov=src` (CPU-only PyTorch) | any of the 300 tests fails |
 | benchmark | `latency_p95.py --requests 500`, `memory_profile.py` | p95 > 200 ms (NFR-01) |
-| docker | build the image, smoke-test `/health` and a recommendation; push to GHCR only on `main` | image does not build or does not answer |
+| docker | build the image, smoke-test that same image (`/health` and a recommendation); push it to GHCR only on `main` and only after the smoke test | image does not build or does not answer |
 
-Reliability contribution: a change cannot reach `main` with broken style,
-wrong types, a failing test, a latency regression past the requirement, or
-an image that does not start. Test and benchmark reports are uploaded as
-build artifacts, so every commit leaves evidence.
+Reliability contribution: every commit gets a red or green verdict on style,
+types, tests, latency and a startable image, and the published image is the
+one that passed the smoke test. Test and benchmark reports are uploaded as
+build artifacts, so every commit leaves evidence. The workflow does not by
+itself block a push: `main` is not protected yet, so branch protection with
+required status checks and a reviewed pull request is the proposed next
+integration control.
 
-**Local verification.** The workflow has no GitHub run history yet, so the
-`quality`, `tests` and `benchmark` jobs were reproduced command by command in
-a clean `python:3.12` container: all passed (300 tests, 84 % line coverage;
-p95 2.2 ms over 500 requests). The `docker` job was reproduced with
-`docker compose build` and the same smoke test (§5). One defect was found and
-fixed: the benchmark step now sets `RECO_LOG_LEVEL=WARNING`, otherwise the
-per-request INFO logs were written into `reports/latency_p95.json`.
+**Run history.** The first GitHub run (commit `5b98138`, 22 Oct 2026) passed
+`quality`, `tests` (300 passed, 84 % coverage) and `benchmark` (p95 1.196 ms),
+but `docker` failed before building: the GHCR repository name contained the
+uppercase owner `Michou001`. The job now lowercases the image name and pushes
+only the image that passed the smoke test. Before the first push, the Python
+jobs had been reproduced in a clean `python:3.12` container (300 tests, 84 %
+coverage, p95 2.2 ms on the development machine); that local measurement and
+the runner measurement are different environments and are reported apart.
 
 ## 5. Containerization and deployment
 

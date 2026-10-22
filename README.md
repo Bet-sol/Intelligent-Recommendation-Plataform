@@ -105,10 +105,10 @@ docker compose --profile full up --build      # + Redis, RabbitMQ, MongoDB and t
 kubectl apply -k k8s/                         # Kubernetes manifests
 ```
 
-Reports are written to `reports/`. Errors returned to clients are in Spanish and every error or
-degradation is recorded in the error journal `artifacts/logs/errors.jsonl` (see
-[`docs/ERROR_HANDLING_ALGORITHM.md`](docs/ERROR_HANDLING_ALGORITHM.md)). CI runs on every push:
-`.github/workflows/ci.yml`.
+Reports are written to `reports/`. Errors returned to clients are in Spanish; handled validation and
+domain errors, and every degradation, are recorded in the error journal `artifacts/logs/errors.jsonl` (see
+[`docs/ERROR_HANDLING_ALGORITHM.md`](docs/ERROR_HANDLING_ALGORITHM.md)). CI runs on every push to `main`,
+on pull requests and on demand: `.github/workflows/ci.yml`.
 
 ---
 
