@@ -23,9 +23,11 @@ import time
 from typing import Any
 
 from ai.interfaces import IRecommendationStrategy, ScoredItem, UserFeatures
+from application.error_journal import ErrorJournal
 from config.settings import Settings, load_settings
 from data.feature_store_manager import FeatureStoreManager
 from errors import (
+    MENSAJES_ES,
     ColdStartError,
     EventPublishError,
     FeatureStoreUnavailableError,
@@ -56,6 +58,7 @@ class RecommendationController:
         settings: Settings | None = None,
         logger: Any | None = None,
         startup_degradation_reason: str | None = None,
+        error_journal: ErrorJournal | None = None,
     ) -> None:
         self._strategy = strategy
         self._feature_store = feature_store
@@ -65,6 +68,7 @@ class RecommendationController:
         self._fallback = fallback_strategy
         self._settings = settings or load_settings()
         self._logger = logger
+        self._journal = error_journal
         # Set by the composition root when the configured strategy could not be
         # loaded at startup and the fallback took its place. That degradation
         # lasts for the life of the process, so every response has to declare
@@ -106,6 +110,17 @@ class RecommendationController:
         # A failure during this request takes precedence over the startup one,
         # because it is the more specific explanation of what the client got.
         degradation_reason = reason or self._startup_degradation_reason
+
+        if degradation_reason is not None and self._journal is not None:
+            self._journal.record(
+                "degradation",
+                degradation_reason,
+                MENSAJES_ES.get(degradation_reason, degradation_reason),
+                route=f"/recommendations/{user_id}",
+                user_id=user_id,
+                status=200,
+                strategy=strategy_used.strategy_id,
+            )
 
         response = RecommendationResponse(
             user_id=user_id,
@@ -246,8 +261,24 @@ class RecommendationController:
             self._event_queue.publish(event)
         except EventPublishError as exc:
             self._log("warning", "event.publish_failed", code=exc.code, detail=exc.detail)
+            self._record_publish_failure(response, exc.code, exc.detail)
         except Exception as exc:  # noqa: BLE001 - publication never breaks a served response
             self._log("warning", "event.publish_failed", error=f"{type(exc).__name__}: {exc}")
+            self._record_publish_failure(response, EventPublishError.code, str(exc))
+
+    def _record_publish_failure(
+        self, response: RecommendationResponse, code: str, detail: str | None
+    ) -> None:
+        if self._journal is not None:
+            self._journal.record(
+                "degradation",
+                code,
+                MENSAJES_ES.get(code, code),
+                route=f"/recommendations/{response.user_id}",
+                user_id=response.user_id,
+                status=200,
+                detail=detail,
+            )
 
     def _safe_store_version(self) -> str:
         try:

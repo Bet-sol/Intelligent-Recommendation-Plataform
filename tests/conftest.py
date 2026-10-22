@@ -127,6 +127,7 @@ def settings(tmp_path: Path, feature_store_dir: Path, monkeypatch: pytest.Monkey
     monkeypatch.setenv("RECO_RABBITMQ_URL", "")
     monkeypatch.setenv("RECO_MONGO_URL", "")
     monkeypatch.setenv("RECO_LOG_LEVEL", "CRITICAL")
+    monkeypatch.setenv("RECO_ERROR_LOG_PATH", str(tmp_path / "logs" / "errors.jsonl"))
     return load_settings()
 
 

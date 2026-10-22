@@ -17,6 +17,27 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
+#: Client-facing messages in Spanish, keyed by the stable error ``code``.
+#: ``message`` on the exception stays in English for developers and logs;
+#: only the payload returned to the client is translated. A code missing from
+#: this table falls back to the original message, so nothing breaks when a
+#: new exception is added before its translation.
+MENSAJES_ES: dict[str, str] = {
+    "validation_error": "La solicitud no cumple con el esquema declarado.",
+    "user_not_found": "El usuario solicitado no existe.",
+    "cold_start": "El usuario no tiene historial suficiente; se usó el ranking de popularidad.",
+    "feature_store_unavailable": (
+        "No se pudieron leer las características del usuario; se usó el ranking de popularidad."
+    ),
+    "model_unavailable": (
+        "El modelo de recomendación no está disponible; se usó el ranking de popularidad."
+    ),
+    "event_publish_failed": (
+        "El evento no pudo publicarse; quedó guardado en el búfer de reintentos."
+    ),
+    "internal_error": "Ocurrió un error interno del servicio.",
+}
+
 
 class RecommendationPlatformError(Exception):
     """Base class for every error the platform raises on its own behalf.
@@ -41,7 +62,7 @@ class RecommendationPlatformError(Exception):
 
     def to_payload(self) -> dict[str, str]:
         """Client-facing representation, free of stack traces and internal ids."""
-        payload = {"code": self.code, "message": self.message}
+        payload = {"code": self.code, "message": MENSAJES_ES.get(self.code, self.message)}
         if self.detail is not None:
             payload["detail"] = self.detail
         return payload
@@ -110,6 +131,7 @@ DEGRADATION_REASONS: dict[type[RecommendationPlatformError], str] = {
 }
 
 __all__ = [
+    "MENSAJES_ES",
     "DEGRADATION_REASONS",
     "ColdStartError",
     "EventPublishError",

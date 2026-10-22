@@ -36,6 +36,9 @@ from persistence.interfaces import IInteractionHistoryRepository, InteractionRec
 #: Seconds waited between attempts when the repository rejects a write.
 RETRY_BACKOFF_SECONDS = 0.2
 
+#: Seconds between two attempts to replay the local retry buffer.
+RETRY_BUFFER_DRAIN_SECONDS = 30.0
+
 
 class FeedbackHistoryService:
     """Background worker persisting the recommendation and feedback history."""
@@ -48,12 +51,17 @@ class FeedbackHistoryService:
         max_retries: int = 3,
         backoff_seconds: float = RETRY_BACKOFF_SECONDS,
         logger: Any | None = None,
+        retry_buffer: RetryBuffer | None = None,
+        drain_interval_seconds: float = RETRY_BUFFER_DRAIN_SECONDS,
     ) -> None:
         self._queue = queue
         self._repository = repository
         self._max_retries = max_retries
         self._backoff_seconds = backoff_seconds
         self._logger = logger
+        self._retry_buffer = retry_buffer
+        self._drain_interval = drain_interval_seconds
+        self._last_drain = 0.0
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.processed = 0
@@ -82,6 +90,7 @@ class FeedbackHistoryService:
             queue if queue is not None else build_event_queue(settings),
             repository,
             logger=logger,
+            retry_buffer=RetryBuffer(settings.messaging.retry_buffer_path),
         )
 
     def handle(self, event: InteractionEvent) -> bool:
@@ -126,6 +135,7 @@ class FeedbackHistoryService:
         """Consume until ``stop`` is called. This is the worker entry point."""
         self._log("info", "worker.started", backend=self._queue.describe())
         while not self._stop.is_set():
+            self.maybe_drain_retry_buffer()
             try:
                 consumed = self.run_once(max_events=64, timeout=poll_interval)
             except Exception as exc:  # noqa: BLE001 - the worker must survive one bad event
@@ -151,6 +161,30 @@ class FeedbackHistoryService:
         if self._thread is not None:
             self._thread.join(timeout=timeout)
             self._thread = None
+
+    def maybe_drain_retry_buffer(self, *, now: float | None = None) -> int:
+        """Replay the retry buffer when the drain interval has elapsed.
+
+        Events land in the buffer when the broker refused them (Table 10).
+        Replaying them here, from the worker loop, is what closes that path:
+        without it the buffer would only ever be written.
+        """
+        if self._retry_buffer is None:
+            return 0
+        current = time.monotonic() if now is None else now
+        if current - self._last_drain < self._drain_interval:
+            return 0
+        self._last_drain = current
+        if not self._retry_buffer.path.exists():
+            return 0
+        try:
+            written = self.drain_retry_buffer(self._retry_buffer)
+        except Exception as exc:  # noqa: BLE001 - a failed replay is retried next interval
+            self._log("warning", "retry_buffer.drain_failed", error=f"{type(exc).__name__}: {exc}")
+            return 0
+        if written:
+            self._log("info", "retry_buffer.drained", written=written)
+        return written
 
     def drain_retry_buffer(self, buffer: RetryBuffer) -> int:
         """Persist the events that could never reach the broker (Table 10)."""

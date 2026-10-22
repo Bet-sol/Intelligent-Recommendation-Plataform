@@ -34,13 +34,14 @@ from ai.decorators.logging_decorator import configure_logging
 from ai.decorators.timing_decorator import TimingDecorator
 from ai.interfaces import IRecommendationStrategy
 from ai.model_factory import ModelFactory
+from application.error_journal import ErrorJournal
 from application.interaction_ingestion_service import InteractionIngestionService
 from application.recommendation_controller import RecommendationController
 from config.settings import Settings, load_settings
 from data.feature_store_manager import ParquetFeatureStoreManager
-from errors import ModelUnavailableError, RecommendationPlatformError
+from errors import MENSAJES_ES, ModelUnavailableError, RecommendationPlatformError
 from messaging.feedback_history_service import FeedbackHistoryService
-from messaging.interaction_event_queue import build_event_queue
+from messaging.interaction_event_queue import RetryBuffer, build_event_queue
 from persistence.nosql_interaction_history_repository import NoSqlInteractionHistoryRepository
 from persistence.sql_catalog_repository import SqlCatalogRepository
 from persistence.sql_user_profile_repository import SqlUserProfileRepository
@@ -74,6 +75,7 @@ class ApplicationComponents:
     timing: TimingDecorator | None
     active_strategy: str
     startup_error: str | None = None
+    journal: ErrorJournal | None = None
 
 
 def build_components(settings: Settings | None = None) -> ApplicationComponents:
@@ -86,10 +88,17 @@ def build_components(settings: Settings | None = None) -> ApplicationComponents:
     profiles = SqlUserProfileRepository.from_settings(settings)
     history = NoSqlInteractionHistoryRepository.from_settings(settings)
     queue = build_event_queue(settings)
+    journal = ErrorJournal(settings.logging.error_journal_path)
 
     fallback, fallback_error = _build_fallback(settings)
     base, active_strategy, startup_error = _build_base_strategy(settings, fallback)
     decorated = build_chain(base, settings.model.decorator_chain, settings=settings)
+    # The fallback runs through the same decorator chain as the active
+    # strategy, so a cold-start or degraded request is cached, timed and
+    # logged exactly like a normal one (Section 9.9: one operational record
+    # per prediction, whichever strategy produced it).
+    if fallback is not None:
+        fallback = build_chain(fallback, settings.model.decorator_chain, settings=settings)
 
     controller = RecommendationController(
         strategy=decorated,
@@ -100,6 +109,7 @@ def build_components(settings: Settings | None = None) -> ApplicationComponents:
         fallback_strategy=fallback,
         settings=settings,
         logger=logger,
+        error_journal=journal,
         # When the configured strategy could not be loaded, the fallback is
         # serving in its place for the whole life of the process; the client
         # is told so on every response, not only in /health.
@@ -114,12 +124,18 @@ def build_components(settings: Settings | None = None) -> ApplicationComponents:
         catalog=catalog,
         profiles=profiles,
         history=history,
-        worker=FeedbackHistoryService(queue, history, logger=logger),
+        worker=FeedbackHistoryService(
+            queue,
+            history,
+            logger=logger,
+            retry_buffer=RetryBuffer(settings.messaging.retry_buffer_path),
+        ),
         queue_backend=queue.describe(),
         cache_backend=_find_cache_backend(decorated),
         timing=_find_timing(decorated),
         active_strategy=active_strategy,
         startup_error=startup_error or fallback_error,
+        journal=journal,
     )
 
 
@@ -217,25 +233,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def get_components() -> ApplicationComponents:
         return components
 
+    def _journal(request: Request, code: str, message: str, status: int, **fields: Any) -> None:
+        components.journal.record(  # type: ignore[union-attr]
+            "error", code, message, route=request.url.path, status=status, **fields
+        )
+
     @app.exception_handler(RequestValidationError)
     async def _on_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         """Table 10, row 1: a schema violation is a 400, not the default 422."""
         first = exc.errors()[0] if exc.errors() else {}
         field = ".".join(str(part) for part in first.get("loc", ()) if part != "body")
+        detail = f"{field}: {first.get('msg', 'invalid value')}" if field else None
+        message = MENSAJES_ES["validation_error"]
+        _journal(request, "validation_error", message, 400, detail=detail)
         return JSONResponse(
             status_code=400,
             content=ErrorResponse(
-                code="validation_error",
-                message="the request does not satisfy the declared schema",
-                detail=f"{field}: {first.get('msg', 'invalid value')}" if field else None,
+                code="validation_error", message=message, detail=detail
             ).model_dump(),
         )
 
     @app.exception_handler(ValueError)
     async def _on_value_error(request: Request, exc: ValueError) -> JSONResponse:
+        message = MENSAJES_ES["validation_error"]
+        _journal(request, "validation_error", message, 400, detail=str(exc))
         return JSONResponse(
             status_code=400,
-            content=ErrorResponse(code="validation_error", message=str(exc)).model_dump(),
+            content=ErrorResponse(
+                code="validation_error", message=message, detail=str(exc)
+            ).model_dump(),
         )
 
     @app.exception_handler(RecommendationPlatformError)
@@ -244,7 +270,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ) -> JSONResponse:
         """Translate the vocabulary of Table 10 into status codes, once."""
         status = exc.status_code if exc.status_code != 200 else 503
-        return JSONResponse(status_code=status, content=exc.to_payload())
+        payload = exc.to_payload()
+        _journal(request, exc.code, payload["message"], status, detail=exc.detail)
+        return JSONResponse(status_code=status, content=payload)
 
     @app.get(
         "/recommendations/{user_id}",

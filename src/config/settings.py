@@ -214,6 +214,11 @@ class LoggingSettings:
 
     level: str = field(default_factory=lambda: _env_str("RECO_LOG_LEVEL", "INFO"))
     json_output: bool = field(default_factory=lambda: _env_bool("RECO_LOG_JSON", True))
+    error_journal_path: Path = field(
+        default_factory=lambda: _env_path(
+            "RECO_ERROR_LOG_PATH", REPO_ROOT / "artifacts" / "logs" / "errors.jsonl"
+        )
+    )
 
 
 @dataclass(frozen=True)
