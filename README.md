@@ -128,7 +128,11 @@ recommendation-platform/
 ├── tests/                  # Mirrors src/ package by package + failure injection tests
 ├── benchmarks/             # Latency p95, model evaluation, memory profile, load test
 ├── reports/                # Milestone 3 measurement reports (JSON / Markdown)
-├── docs/                   # Milestone 3 guide and error-handling algorithm
+├── docs/                   # Guides, error handling, and user/developer manuals
+│   ├── MILESTONE3_IMPLEMENTATION.md
+│   ├── ERROR_HANDLING_ALGORITHM.md
+│   ├── User_Manual_v1.pdf
+│   └── Developer_Manual_v2.pdf
 ├── k8s/                    # Kubernetes manifests (kubectl apply -k k8s/)
 ├── Dockerfile              # API image; docker-compose.yml for local deployment
 ├── datasets/               # MovieLens ml-latest-small source data
