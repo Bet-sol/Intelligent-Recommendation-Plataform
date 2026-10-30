@@ -16,7 +16,7 @@
 
 ---
 
-## 📌 Architecture Overview
+## Architecture Overview
 
 This platform implements a **Layered Architecture** following SOLID principles and GoF / ML design patterns, ensuring that the AI inference engine evolves independently from the business logic and persistence layers:
 
@@ -38,7 +38,7 @@ This platform implements a **Layered Architecture** following SOLID principles a
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites & Virtual Environment
 
@@ -94,7 +94,7 @@ Once running, the following are available:
 
 ---
 
-## 🧪 Milestone 3 — validation, profiling and deployment
+## Milestone 3 — validation, profiling and deployment
 
 ```bash
 python benchmarks/evaluate_models.py          # temporal holdout + Precision/Recall/F1/NDCG per strategy
